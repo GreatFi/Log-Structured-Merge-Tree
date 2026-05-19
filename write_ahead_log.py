@@ -3,7 +3,6 @@ A simple implementation of a write-ahead-log used for reconcilation after networ
 """
 import os
 import csv
-from Red_Black_Tree import insert_key
 class Singleton:
     
     def __init__(self, decorated):
