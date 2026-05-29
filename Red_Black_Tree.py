@@ -6,7 +6,6 @@ This program implements a Red black tree in python which acts the memtable for t
 
 import sys
 from write_ahead_log import WAL
-import os
 MAX_BYTES_SIZE = 1024 * 1024
 
 class Node:
@@ -21,19 +20,10 @@ class Node:
 
 class RedBlackTree:
 
-    def __init__(self, wal_filename, sstable_filename=None):
-        self.wal = WAL.instance(wal_filename)
-        self.NIL = Node(0)
+    def __init__(self):
+        self.NIL = Node(0, None)
         self.NIL.color = "BLACK"
         self.root = self.NIL
-        self.current_size = 0
-        self.sstable_filename = sstable_filename
-        self.wal_filename = wal_filename
-
-        rows = self.wal.replay(wal_filename)
-
-        for row in rows:
-            self.insert_key(row[1], row[2])
 
     def insert_key(self, key, value):
         node = Node(key, value)
@@ -41,7 +31,6 @@ class RedBlackTree:
         node.right = self.NIL
         node.left = self.NIL
 
-        self.wal.write(f"PUT,{node.key},{node.value}\n")
 
         if self.root is self.NIL:
             self.root = node     
@@ -64,15 +53,12 @@ class RedBlackTree:
                 parent.right = node
             self.try_rebalance(node)
 
-        node_length = sys.getsizeof(node.key) + sys.getsizeof(node.value)
-        self.current_size += node_length
-
-        if self.current_size >= MAX_BYTES_SIZE:
-            self.flush()
 
     
-    def in_order_traversal(self, node, result_list = []):
+    def in_order_traversal(self, node, result_list = None):
         
+        if result_list is None:
+            result_list = []
         if node != self.NIL:
             self.in_order_traversal(node.left, result_list)
             result_list.append((node.key, node.value))
@@ -80,18 +66,6 @@ class RedBlackTree:
 
         return result_list
 
-
-    def flush(self):
-        entries = self.in_order_traversal(self.root)
-        with open(self.sstable_filename, mode="w") as f:
-            
-            for key, value in entries:
-                f.write(f"{key},{value}\n")
-
-        os.remove(self.wal_filename)
-
-        self.root = self.NIL
-        self.current_size = 0
 
     def try_rebalance(self, node):
         
@@ -101,6 +75,7 @@ class RedBlackTree:
         
         if node.parent.color == "BLACK":
             return
+        
         
         if node.parent == node.parent.parent.right:
             uncle = node.parent.parent.left  
@@ -117,6 +92,7 @@ class RedBlackTree:
         elif uncle is self.NIL or uncle.color == "BLACK":
             self.fix_insert(node)
         
+
         
     def left_rotate(self, node):
         y = node.right
@@ -190,6 +166,4 @@ class RedBlackTree:
                 current = current.right
         return False
         
-    def delete(self, key):
-        self.insert_key(key, "tombstone")
 
