@@ -3,6 +3,8 @@ A simple implementation of a write-ahead-log used for reconcilation after networ
 """
 import os
 import csv
+
+
 class Singleton:
     
     def __init__(self, decorated):
@@ -10,10 +12,10 @@ class Singleton:
 
     def instance(self, filename):
         try:
-            return self.instance()
+            return self._instance
         except AttributeError:
-            self.instance = self._decorated(filename)
-            return self.instance()
+            self._instance = self._decorated(filename)
+            return self._instance
 
     def __call__(self):
         raise TypeError("Singletons must be accessed through 'instance()'")
