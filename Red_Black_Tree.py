@@ -6,7 +6,6 @@ This program implements a Red black tree in python which acts the memtable for t
 
 import sys
 from write_ahead_log import WAL
-MAX_BYTES_SIZE = 1024 * 1024
 
 class Node:
     
@@ -17,6 +16,7 @@ class Node:
         self.left = None
         self.right = None
         self.parent = None
+        self.number_of_keys = 0
 
 class RedBlackTree:
 
@@ -35,6 +35,7 @@ class RedBlackTree:
         if self.root is self.NIL:
             self.root = node     
             node.color = "BLACK"
+            self.number_of_keys += 1
         else:
             current = self.root
             parent = None
@@ -49,8 +50,10 @@ class RedBlackTree:
 
             if node.key < parent.key:
                 parent.left = node
+                self.number_of_keys += 1
             else:
                 parent.right = node
+                self.number_of_keys += 1
             self.try_rebalance(node)
 
 

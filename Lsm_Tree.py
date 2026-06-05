@@ -6,9 +6,12 @@ import os
 import sys
 from Red_Black_Tree import RedBlackTree
 from write_ahead_log import WAL
+from Bloom_Filter import BloomFilter
 MAX_BYTES_SIZE = 1024 * 1024
 MAX_LEVEL_SIZE = 5
 MAX_SSTABLES_PER_LEVEL = 4
+
+
 class LSMTREE:
 
     def __init__(self, wal_filename, sstable_filename):
@@ -72,14 +75,12 @@ class LSMTREE:
             return result
         
         for level in self.levels:
-            for level_0 in level:
+            for level_0 in reversed(level):
                 with open(level_0, mode="r") as file: 
-                    line = file.readline()
-                    while line:
+                    for line in file:
                         key_value = line.split(",")
                         if key == key_value[0]:
                             return f"{key},{key_value[1]}"
-                        line = file.readline()
         return None
          
     def compaction(self, level_number):
@@ -104,7 +105,7 @@ class LSMTREE:
                             kv_dict[kv[0]] = kv[1].strip()
                         
             with open(self.sstable_filename, mode="w") as f:
-                for key, value in kv_dict.items():
+                for key, value in sorted(kv_dict.items()):
                     f.write(f"{key},{value}\n")
             self.sstable_counter += 1 
 
