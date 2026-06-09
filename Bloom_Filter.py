@@ -7,12 +7,16 @@ from mmh3 import hash
 
 class BloomFilter:
 
-    def __init__(self, num_inserts, false_positive_prob):
+    def __init__(self, num_inserts, false_positive_prob, existing_bitarray = None):
 
         self.false_positive_prob = false_positive_prob
         self.bitarray_size = BloomFilter.get_bitarray_size(num_inserts, false_positive_prob)
-        self.bitarray = bitarray(self.bitarray_size)
         self.num_hash_func = BloomFilter.get_hash_func_count(self.bitarray_size, num_inserts)
+
+        if existing_bitarray is not None:
+            self.bitarray = existing_bitarray
+        else:
+            self.bitarray = bitarray(self.bitarray_size)
 
     def addKey(self, insert):
         hash_values = []

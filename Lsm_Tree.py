@@ -3,7 +3,10 @@ This file is the main orchestrator for the lsm tree algo implementation.This tie
 """
 
 import os
+import threading
 import sys
+import pickle
+from bitarray import bitarray
 from Red_Black_Tree import RedBlackTree
 from write_ahead_log import WAL
 from Bloom_Filter import BloomFilter
@@ -11,22 +14,26 @@ MAX_BYTES_SIZE = 1024 * 1024
 MAX_LEVEL_SIZE = 5
 MAX_SSTABLES_PER_LEVEL = 4
 
-
 class LSMTREE:
 
     def __init__(self, wal_filename, sstable_filename):
 
-        self.memtable = RedBlackTree()
-        self.WAL = WAL.instance(wal_filename)
+        self.memtable_1 = RedBlackTree()
+        self.memtable_2 = RedBlackTree()
+        self.WAL_1 = WAL("wal_1")
+        self.WAL_2 = WAL("wal_2")
+        self.active_WAL = self.WAL_1
         self.wal_filename = wal_filename
         self.current_size = 0
         self.sstable_filename = sstable_filename
         self.sstable_counter = 0
         self.sstable_base = "sstable"
         self.levels = [[]]
+        self.active_memtable = self.memtable_1
+        self.lock = threading.Lock()
 
         if os.path.isfile(self.wal_filename):
-            rows = self.WAL.replay(self.wal_filename)
+            rows = self.active_WAL.replay(self.wal_filename)
 
             for row in rows:
                 if row[0] == "PUT":
@@ -36,46 +43,76 @@ class LSMTREE:
 
     def write(self, key, value):
 
-        self.WAL.write(f"PUT,{key},{value}\n")
-        self.memtable.insert_key(key, value)
-        self.current_size += sys.getsizeof(key) + sys.getsizeof(value)
+        self.active_WAL.write(f"PUT,{key},{value}\n")
 
-        if self.current_size >= MAX_BYTES_SIZE:
-            self.flush()
+        with self.lock:
+            self.active_memtable.insert_key(key, value)
+            self.current_size += sys.getsizeof(key) + sys.getsizeof(value)
+
+            if self.current_size >= MAX_BYTES_SIZE:
+                self.flush()
 
     def delete(self, key):
-        self.WAL.write(f"DELETE,{key}\n")
-        self.memtable.insert_key(key, "tombstone")
+        self.active_WAL.write(f"DELETE,{key}\n")
+        with self.lock:
+            self.active_memtable.insert_key(key, "tombstone")
         
     def flush(self):
-        entries = self.memtable.in_order_traversal(self.memtable.root)
+        
+        memtable_to_flush = self.active_memtable
+        wal_to_delete = self.active_WAL
+        if self.active_memtable is self.memtable_1 and self.active_WAL is self.WAL_1:
+            self.active_memtable = self.memtable_2
+            self.active_WAL = self.WAL_2
+        else:
+            self.active_memtable = self.memtable_1
+            self.active_WAL = self.WAL_1
+        self.current_size = 0
 
+        entries = memtable_to_flush.in_order_traversal(memtable_to_flush.root)
         self.sstable_filename = f"{self.sstable_base}{self.sstable_counter}" 
+
+        bf = BloomFilter(memtable_to_flush.number_of_keys, 0.01)
         with open(self.sstable_filename, mode="w") as f:
             
             for key, value in entries:
                 f.write(f"{key},{value}\n")
-        self.sstable_counter += 1
+                bf.addKey(f"{key}") 
+        inserts = bf.bitarray.tobytes()
 
+        with open(f"{self.sstable_filename}_bloom", mode="wb") as bloom:
+            pickle.dump({"n":memtable_to_flush.number_of_keys, "inserts":inserts}, bloom)
+        
+        self.sstable_counter += 1
         self.levels[0].append(self.sstable_filename)
 
                 
-        self.memtable.root = self.memtable.NIL
-        self.current_size = 0
+        memtable_to_flush.root = memtable_to_flush.NIL
+        memtable_to_flush.number_of_keys = 0
 
-        os.remove(self.wal_filename)
+        os.remove(wal_to_delete.filename)
         self.compaction()
 
 
         
     def read(self, key):
-
-        result =self.memtable.search(key)
+        
+        result =self.active_memtable.search(key)
         if result:
             return result
         
         for level in self.levels:
+
             for level_0 in reversed(level):
+
+                with open(f"{level_0}_bloom", mode="rb") as bloom:
+                    result_dict = pickle.load(bloom)
+                bit = bitarray()
+                bit.frombytes(result_dict["inserts"])
+                bf = BloomFilter(result_dict["n"],0.01, bit)
+               
+                if bf.check(key) is False:
+                    continue
                 with open(level_0, mode="r") as file: 
                     for line in file:
                         key_value = line.split(",")

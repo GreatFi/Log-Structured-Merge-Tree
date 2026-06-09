@@ -4,26 +4,6 @@ A simple implementation of a write-ahead-log used for reconcilation after networ
 import os
 import csv
 
-
-class Singleton:
-    
-    def __init__(self, decorated):
-        self._decorated = decorated
-
-    def instance(self, filename):
-        try:
-            return self._instance
-        except AttributeError:
-            self._instance = self._decorated(filename)
-            return self._instance
-
-    def __call__(self):
-        raise TypeError("Singletons must be accessed through 'instance()'")
-    
-    def __instancecheck__(self, instance):
-        return isinstance(self._decorated, instance)
-    
-@Singleton
 class WAL:
     
     def __init__(self, filename):
