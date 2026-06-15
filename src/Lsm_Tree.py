@@ -7,9 +7,9 @@ import threading
 import sys
 import pickle
 from bitarray import bitarray
-from Red_Black_Tree import RedBlackTree
-from write_ahead_log import WAL
-from Bloom_Filter import BloomFilter
+from src.Red_Black_Tree import RedBlackTree
+from src.write_ahead_log import WAL
+from src.Bloom_Filter import BloomFilter
 MAX_BYTES_SIZE = 1024 * 1024
 MAX_LEVEL_SIZE = 5
 MAX_SSTABLES_PER_LEVEL = 4

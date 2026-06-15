@@ -3,38 +3,39 @@
 This program implements a Red black tree in python which acts the memtable for the lsm tree algorithm where data is stored for faster writes to the database.
 
 """
-
-import sys
-from write_ahead_log import WAL
+RED = "RED"
+BLACK = "BLACK"
 
 class Node:
     
     def __init__(self, key, value):
         self.key = key
         self.value = value
-        self.color = "RED"
+        self.color = RED
         self.left = None
         self.right = None
         self.parent = None
-        self.number_of_keys = 0
+  
 
 class RedBlackTree:
 
     def __init__(self):
         self.NIL = Node(0, None)
-        self.NIL.color = "BLACK"
+        self.NIL.color = BLACK
         self.root = self.NIL
+        self.number_of_keys = 0
 
     def insert_key(self, key, value):
         node = Node(key, value)
 
         node.right = self.NIL
         node.left = self.NIL
+        node.parent = self.NIL
 
 
         if self.root is self.NIL:
             self.root = node     
-            node.color = "BLACK"
+            node.color = BLACK
             self.number_of_keys += 1
         else:
             current = self.root
@@ -73,10 +74,10 @@ class RedBlackTree:
     def try_rebalance(self, node):
         
         if self.root is node:
-            node.color = "BLACK"
+            node.color = BLACK
             return
         
-        if node.parent.color == "BLACK":
+        if node.parent.color == BLACK:
             return
         
         
@@ -85,14 +86,14 @@ class RedBlackTree:
         else:
             uncle = node.parent.parent.right
 
-        if uncle is not None and uncle.color == "RED":
+        if uncle is not None and uncle.color == RED:
 
-            uncle.color = "BLACK"
+            uncle.color = BLACK
             grand_parent = node.parent.parent
-            node.parent.color = "BLACK"
-            grand_parent.color= "RED"
+            node.parent.color = BLACK
+            grand_parent.color= RED
             self.try_rebalance(grand_parent)
-        elif uncle is self.NIL or uncle.color == "BLACK":
+        elif uncle is self.NIL or uncle.color == BLACK:
             self.fix_insert(node)
         
 
@@ -136,26 +137,26 @@ class RedBlackTree:
         parent = node.parent
         if node.parent == node.parent.parent.left:
             uncle = node.parent.parent.right
-            if uncle.color == "BLACK" and node == node.parent.right:
+            if uncle.color == BLACK and node == node.parent.right:
                 self.left_rotate(parent)
                 self.right_rotate(grand_parent)
-                node.color = "BLACK"
-                grand_parent.color = "RED"
-            elif uncle.color == "BLACK" and node == node.parent.left:
+                node.color = BLACK
+                grand_parent.color = RED
+            elif uncle.color == BLACK and node == node.parent.left:
                 self.right_rotate(grand_parent)
-                parent.color = "BLACK"
-                grand_parent.color = "RED"
+                parent.color = BLACK
+                grand_parent.color = RED
         else:
             uncle = node.parent.parent.left
-            if uncle.color == "BLACK" and node == node.parent.left:
+            if uncle.color == BLACK and node == node.parent.left:
                 self.right_rotate(parent)
                 self.left_rotate(grand_parent)
-                node.color = "BLACK"
-                grand_parent.color = "RED"
-            elif uncle.color == "BLACK" and node == node.parent.right:
+                node.color = BLACK
+                grand_parent.color = RED
+            elif uncle.color == BLACK and node == node.parent.right:
                 self.left_rotate(grand_parent)
-                parent.color = "BLACK"
-                grand_parent.color = "RED"
+                parent.color = BLACK
+                grand_parent.color = RED
     
     def search(self, key):
         
