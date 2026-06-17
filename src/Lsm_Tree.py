@@ -41,10 +41,12 @@ class LSMTREE:
                 else:
                     self.delete(row[1])
 
-    def write(self, key, value):
+    def write(self, key, value:str):
 
         self.active_WAL.write(f"PUT,{key},{value}\n")
-
+        value = value.strip("\n")
+        
+        
         with self.lock:
             self.active_memtable.insert_key(key, value)
             self.current_size += sys.getsizeof(key) + sys.getsizeof(value)

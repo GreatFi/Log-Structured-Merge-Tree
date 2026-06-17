@@ -9,6 +9,9 @@ class BloomFilter:
 
     def __init__(self, num_inserts, false_positive_prob, existing_bitarray = None):
 
+        if num_inserts <= 0:
+            raise ValueError("Inserts must be greater than zero")
+
         self.false_positive_prob = false_positive_prob
         self.bitarray_size = BloomFilter.get_bitarray_size(num_inserts, false_positive_prob)
         self.num_hash_func = BloomFilter.get_hash_func_count(self.bitarray_size, num_inserts)
@@ -16,9 +19,10 @@ class BloomFilter:
         if existing_bitarray is not None:
             self.bitarray = existing_bitarray
         else:
-            self.bitarray = bitarray(self.bitarray_size)
+            self.bitarray = bitarray(self.bitarray_size) 
 
-    def addKey(self, insert):
+
+    def addKey(self, insert:str):
         hash_values = []
 
         for seed in range(self.num_hash_func):

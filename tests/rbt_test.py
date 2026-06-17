@@ -2,8 +2,7 @@
 Test suite for the red black tree implementation in src/Red_Black_Tree.py
 """
 import unittest 
-from src.Red_Black_Tree import RedBlackTree, Node, BLACK, RED
-
+from src.Red_Black_Tree import RedBlackTree, BLACK, RED
 
 class TestRedBlackTree(unittest.TestCase):
     
@@ -72,7 +71,7 @@ class TestRedBlackTree(unittest.TestCase):
         self.assertEqual(rbt.root.key, 21)
 
         """
-        diagram of the zig zag scenario/
+        diagram of the zig zag scenario which the fix_insert method handles 
             20                               20                                              21
               \                                \                                            /  \
               22         ->                    21                 ->                      20   22
@@ -80,5 +79,46 @@ class TestRedBlackTree(unittest.TestCase):
             21                                   22
         """
 
-if __name__ == '__main__':
-    unittest.main()
+    def test_search(self):
+        rbt = RedBlackTree()
+
+        rbt.insert_key(5, "value1")
+        rbt.insert_key(2, "value2")
+        rbt.insert_key(6, "value6")
+        rbt.insert_key(4, "tombstone")
+
+        # search for key that has a tombstone value
+        key_1 = rbt.search(4)
+
+        # search for key that exists
+        key_2 = rbt.search(5)
+
+        # search for key that doesn't exist
+        key_3 = rbt.search(3)
+        
+        self.assertIsNone(key_1)
+        self.assertEqual(key_2, "value1")
+        self.assertFalse(key_3)
+
+    def test_in_order_trasversal(self):
+        rbt = RedBlackTree()
+
+        # case when there are no nodes inserted
+        results = rbt.in_order_traversal(rbt.root)
+
+        # returns an empty list
+        print(results)
+        self.assertListEqual([], results)
+
+        # case when nodes are inserted
+        rbt.insert_key(20, "value20")
+        rbt.insert_key(19, "value19")
+        rbt.insert_key(18, "value18")
+        rbt.insert_key(21, "value21")
+        rbt.insert_key(22, "value22")
+
+        more_results = rbt.in_order_traversal(rbt.root)
+        self.assertEqual([(18, 'value18'), (19, 'value19'), (20, 'value20'), (21, 'value21'), (22, 'value22')], more_results)
+        print(more_results)
+        
+

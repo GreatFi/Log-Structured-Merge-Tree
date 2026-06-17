@@ -96,7 +96,6 @@ class RedBlackTree:
         elif uncle is self.NIL or uncle.color == BLACK:
             self.fix_insert(node)
         
-
         
     def left_rotate(self, node):
         y = node.right
@@ -163,7 +162,10 @@ class RedBlackTree:
         current = self.root
         while current is not self.NIL:
             if key == current.key:
-                return current.value
+                if current.value != "tombstone":
+                    return current.value
+                else:
+                    return None
             elif key < current.key:
                 current = current.left
             else:

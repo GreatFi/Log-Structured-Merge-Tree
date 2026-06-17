@@ -16,6 +16,7 @@ class WAL:
             self.stream.write(val)
             self.stream.flush()
             os.fsync(self.stream.fileno())
+            
         except IOError:
             print("The filestream isn't currently open")
 
@@ -24,7 +25,6 @@ class WAL:
         rows = []
         with open(filename, mode="r") as f:
             csv_reader = csv.reader(f)
-
             for row in csv_reader:
                 rows.append(row)
         return rows
