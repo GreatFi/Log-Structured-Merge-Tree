@@ -41,6 +41,9 @@ class RedBlackTree:
             current = self.root
             parent = None
             while current is not self.NIL:
+                if node.key == current.key:
+                    current.value = value
+                    return
                 if node.key < current.key:
                     parent = current
                     current = current.left 

@@ -62,7 +62,7 @@ class LSMTREE:
     def flush(self):
         
         memtable_to_flush = self.active_memtable
-        wal_to_delete = self.active_WAL
+        wal_to_truncate = self.active_WAL
         if self.active_memtable is self.memtable_1 and self.active_WAL is self.WAL_1:
             self.active_memtable = self.memtable_2
             self.active_WAL = self.WAL_2
@@ -92,8 +92,8 @@ class LSMTREE:
         memtable_to_flush.root = memtable_to_flush.NIL
         memtable_to_flush.number_of_keys = 0
 
-        os.remove(wal_to_delete.filename)
-        self.compaction()
+        os.truncate(wal_to_truncate.filename, 0)
+        self.compaction(level_number=0)
 
 
         
@@ -119,11 +119,10 @@ class LSMTREE:
                     for line in file:
                         key_value = line.split(",")
                         if key == key_value[0]:
-                            return f"{key},{key_value[1]}"
+                            return f"{key_value[1].strip("\n")}"
         return None
          
     def compaction(self, level_number):
-        
         level = self.levels[level_number]
         if len(level) >= MAX_SSTABLES_PER_LEVEL:
 
@@ -142,10 +141,16 @@ class LSMTREE:
                             continue
                         else:
                             kv_dict[kv[0]] = kv[1].strip()
-                        
+            
+            bf = BloomFilter(len(kv_dict), 0.01)
             with open(self.sstable_filename, mode="w") as f:
                 for key, value in sorted(kv_dict.items()):
                     f.write(f"{key},{value}\n")
+                    bf.addKey(f"{key}")
+            inserts = bf.bitarray.tobytes()
+            with open(f"{self.sstable_filename}_bloom", mode="wb") as bloom:
+                pickle.dump({"n":len(kv_dict), "inserts":inserts}, bloom)
+
             self.sstable_counter += 1 
 
             level_number += 1
@@ -157,6 +162,7 @@ class LSMTREE:
  
             for sstables in level:
                 os.remove(sstables)
+                os.remove(f"{sstables}_bloom")
             level.clear()
 
             self.compaction(level_number)
