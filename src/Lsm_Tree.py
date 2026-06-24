@@ -120,6 +120,7 @@ class LSMTREE:
                         key_value = line.split(",")
                         if key == key_value[0]:
                             return f"{key_value[1].strip("\n")}"
+
         return None
          
     def compaction(self, level_number):
