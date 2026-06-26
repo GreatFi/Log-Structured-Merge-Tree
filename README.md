@@ -4,6 +4,7 @@ This repository implements the Log-Structured-Merge Tree algorithm used for hand
 
 Here is the write path:
 
+```
 Write Ahead Log
       |
 Memtable(RedBlackTree)
@@ -11,13 +12,15 @@ Memtable(RedBlackTree)
 Flushes to the sstables on disk
       |
 Then those sstables are compacted to reduce disk space consumption
-
+```
 This is a summarised diagram of the lifecycle of the data being written to the lsm tree.
 
 Reading from the lsm tree is more like this:
+```
 Memtable
    | -> (Bloomfilters)
 The sstables on Disk
+```
 You may be wondering why Bloom filters were added in between but i will talk about each file individually in more detail.
 
 MAJOR OPERATIONS IN THIS IMPLEMENTATION:
