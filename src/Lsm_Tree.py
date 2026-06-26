@@ -60,7 +60,7 @@ class LSMTREE:
             self.active_memtable.insert_key(key, "tombstone")
         
     def flush(self):
-        
+    
         memtable_to_flush = self.active_memtable
         wal_to_truncate = self.active_WAL
         if self.active_memtable is self.memtable_1 and self.active_WAL is self.WAL_1:

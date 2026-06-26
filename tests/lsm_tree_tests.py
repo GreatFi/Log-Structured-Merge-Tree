@@ -160,7 +160,7 @@ class TestLSMTree(unittest.TestCase):
             return real_transversal(self, root, result_list)
         # writes here cause the flush method to be called, which will trigger the fake_transversal method which won't work if there are no inserts
         self.lsm.write("key17", "value17")
-        self.lsm.write("key18", "value18")
+        self.lsm.write("key18", "value18")  
         self.lsm.write("key19", "value19")
         self.lsm.write("key20", "value20")
 
