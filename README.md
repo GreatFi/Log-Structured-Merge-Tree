@@ -34,7 +34,9 @@ MAJOR OPERATIONS IN THIS IMPLEMENTATION:
 COMPONENTS OF THE LSM TREE
 -----------------------------
 
-WRITE-AHEAD-LOG:This is one of the most important components in the system. It ensures recovery and reliability during unexpected interruptions like power outages or crashes. Since faults are inevitable, the WAL writes all operations to an append-only file. This file can be replayed after an outage to reconstruct the memtable back to its original state.
+WRITE-AHEAD-LOG:
+
+This is one of the most important components in the system. It ensures recovery and reliability during unexpected interruptions like power outages or crashes. Since faults are inevitable, the WAL writes all operations to an append-only file. This file can be replayed after an outage to reconstruct the memtable back to its original state.
 
 MEMTABLE:
 
@@ -63,12 +65,15 @@ LSM TREE - ORCHESTRATOR:
 This component ties everything together.All operations in this system is carried out by this component be it writes,reads and the rest.
 
 WRITES:
+
 When the system starts off from an outage or a crash, it checks if the wal file exists on disk. It replays the wal to rebuild the memtable back to its original state. But if it starts off fresh, it just creates instances of both the memtable and the WAL, but not the bloom filter. The bloom filter instance is initialised later on in the flush method. So after startup, incoming writes are written to the memtable until the memtable hits the size threshold, then triggers the flushing of the data to disk.
 
 READS:
+
 For read operations, this component handles the full lifecycle of the read. It starts by searching the memtable for the key. If it's there, it returns the value immediately. If it isn't, it moves to disk, where the bloom filter comes in and works as described in the bloom filter section. Once the file holding the key is found, the value is returned. If the key isn't found at all, it returns None.
 
 DELETES:
+
 Deletes are a bit more straight forward, delete operations on a key replaces that key's value with a tombstone value.This approach is used because deleting from memtables(if the key is on the memtable) can get ugly quickly.If the node has children removing it means that we have to reassign it's children to another parent which is too complicated.That's why I went with the earlier approach,most implementations handle deletes that way.
 
 CONCURRENCY & FLUSH 
