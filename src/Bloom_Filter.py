@@ -21,7 +21,7 @@ class BloomFilter:
         else:
             self.bitarray = bitarray(self.bitarray_size) 
 
-
+    # adds key to the bloom filter
     def addKey(self, insert:str):
         hash_values = []
 
@@ -30,7 +30,7 @@ class BloomFilter:
             hash_values.append(hash_value)
 
             self.bitarray[hash_value] = True
-
+    # checks if key is in the bloom filter
     def check(self, insert):
         for seed in range(self.num_hash_func):
             hash_value = hash(insert, seed) % self.bitarray_size
@@ -40,13 +40,13 @@ class BloomFilter:
 
     @staticmethod
     def get_bitarray_size(n, p):
-        
+        # formula for optimal size of bit array:
         m = -(n * log(p)) / log(2)**2
         return int(m)
     
     @staticmethod
     def get_hash_func_count(m, n):
-        
+        # formula for optimal number of hash functions:
         k = (m/n) * log(2)
         return int(k)
     

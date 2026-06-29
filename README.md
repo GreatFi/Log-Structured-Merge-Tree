@@ -147,3 +147,4 @@ python -m unittest tests/write_ahead_log_tests.py -v
 python -m unittest tests/bloom_filter_tests.py -v    
 python -m unittest tests/lsm_tree_tests.py -v
 ```
+For a deeper look into my design decisions for this project,see Tradeoffs.md

@@ -175,6 +175,6 @@ class TestLSMTree(unittest.TestCase):
             self.lsm.write("key4", "value4")
 
             main_thread.join()
-            value = self.lsm.memtable_2.search("key1")
+            value = self.lsm.memtable_2.search("key4")
             print(value)
-            self.assertEqual(self.lsm.memtable_2.search("key1"), "value1")
+            self.assertEqual(value, "value4")

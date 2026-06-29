@@ -51,8 +51,8 @@ class LSMTREE:
             self.active_memtable.insert_key(key, value)
             self.current_size += sys.getsizeof(key) + sys.getsizeof(value)
 
-            if self.current_size >= MAX_BYTES_SIZE:
-                self.flush()
+        if self.current_size >= MAX_BYTES_SIZE:
+            self.flush()
 
     def delete(self, key):
         self.active_WAL.write(f"DELETE,{key}\n")
@@ -60,16 +60,18 @@ class LSMTREE:
             self.active_memtable.insert_key(key, "tombstone")
         
     def flush(self):
-    
-        memtable_to_flush = self.active_memtable
-        wal_to_truncate = self.active_WAL
-        if self.active_memtable is self.memtable_1 and self.active_WAL is self.WAL_1:
-            self.active_memtable = self.memtable_2
-            self.active_WAL = self.WAL_2
-        else:
-            self.active_memtable = self.memtable_1
-            self.active_WAL = self.WAL_1
-        self.current_size = 0
+
+        # memtable and wal swap
+        with self.lock:
+            memtable_to_flush = self.active_memtable
+            wal_to_truncate = self.active_WAL
+            if self.active_memtable is self.memtable_1 and self.active_WAL is self.WAL_1:
+                self.active_memtable = self.memtable_2
+                self.active_WAL = self.WAL_2
+            else:
+                self.active_memtable = self.memtable_1
+                self.active_WAL = self.WAL_1
+            self.current_size = 0
 
         entries = memtable_to_flush.in_order_traversal(memtable_to_flush.root)
         self.sstable_filename = f"{self.sstable_base}{self.sstable_counter}" 
@@ -120,7 +122,7 @@ class LSMTREE:
                         key_value = line.split(",")
                         if key == key_value[0]:
                             return f"{key_value[1].strip("\n")}"
-
+                        
         return None
          
     def compaction(self, level_number):
@@ -143,6 +145,7 @@ class LSMTREE:
                         else:
                             kv_dict[kv[0]] = kv[1].strip()
             
+            # bloom filter added to the compacted sstable
             bf = BloomFilter(len(kv_dict), 0.01)
             with open(self.sstable_filename, mode="w") as f:
                 for key, value in sorted(kv_dict.items()):

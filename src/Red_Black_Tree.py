@@ -159,7 +159,6 @@ class RedBlackTree:
                 self.left_rotate(grand_parent)
                 parent.color = BLACK
                 grand_parent.color = RED
-    
     def search(self, key):
         
         current = self.root
